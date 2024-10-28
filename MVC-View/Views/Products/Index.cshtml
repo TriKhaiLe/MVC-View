@@ -1,0 +1,54 @@
+﻿@model IEnumerable<MVC_View.Models.Product>
+
+@{
+    ViewData["Title"] = "Index";
+    List<Catalog> listCatalog = ViewBag.listCatalog;
+}
+
+<div class="filter__item">
+    <div class="row">
+        <div class="col-lg-4 col-md-5">
+            <div class="filter__sort">
+                <span>Sort By</span>
+                <select id="sltDanhMuc" style="display: none;">
+                    <option value="-1">Chọn danh mục</option>
+                    @foreach (var item in listCatalog)
+                    {
+                        <option value="@item.Id">@item.CatalogName</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div id="iddanhsachsanpham_selection" class="row">
+            <div id="iddanhsachsanpham_table"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function () {
+            getSanPhamTable();
+        });
+        var selectedDMId = -1;
+        $("#sltDanhMuc").change(function () {
+            selectedDMId = $("#sltDanhMuc").val();
+            getSanPhamTable();
+        })
+        function getSanPhamTable() {
+            $.ajax({
+                url: "/Products/getListProduct",
+                type: 'GET',
+                data: { iddm: selectedDMId },
+                success: function (data) {
+                    $("#iddanhsachsanpham_table").empty().append(data); 
+                },
+                error: function (xhr, status, error) {
+                    alert(xhr.responseText);
+                }
+            });
+        }
+
+    </script>
+}

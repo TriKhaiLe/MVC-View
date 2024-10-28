@@ -8,6 +8,8 @@ namespace MVC_View
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddHttpClient();
+            builder.Services.AddSession();
 
             var app = builder.Build();
 
@@ -25,10 +27,19 @@ namespace MVC_View
             app.UseRouting();
 
             app.UseAuthorization();
+            app.UseSession();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                  name: "areas",
+                  pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
+                );
+            });
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Account}/{action=Login}/{id?}");
 
             app.Run();
         }
