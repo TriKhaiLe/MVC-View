@@ -32,19 +32,34 @@ namespace MVC_View.Controllers
         [HttpPost]
         public IActionResult Login(User user)
         {
+            // Check if there is already an active session
             if (HttpContext.Session.GetString("Username") == null)
             {
-                HttpContext.Session.SetString("Username", user.Username);
+                // Retrieve the user from the database (assuming you have a database context, e.g., _context)
+                var validUser = _context.Users
+                    .FirstOrDefault(u => u.Username == user.Username && u.Password == user.Password);
 
-                if (user.Username == "admin")
+                // If the user is valid, set the session and redirect to appropriate area
+                if (validUser != null)
                 {
-                    return RedirectToAction("Index", "Home", new { area = "Admin" });
+                    HttpContext.Session.SetString("Username", validUser.Username);
+
+                    if (validUser.Username == "admin")
+                    {
+                        return RedirectToAction("Index", "Home", new { area = "Admin" });
+                    }
+                    else
+                    {
+                        return RedirectToAction("Index", "Products");
+                    }
                 }
                 else
                 {
-                    return RedirectToAction("Index", "Products");
+                    // Invalid user credentials
+                    ModelState.AddModelError("", "Invalid username or password.");
                 }
             }
+
             return View();
         }
 
