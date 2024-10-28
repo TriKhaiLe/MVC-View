@@ -3,11 +3,19 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace MVC_View.Controllers
 {
     public class UsersController : Controller
     {
+        private readonly QuanLySanPhamContext _context;
+
+        public UsersController()
+        {
+            _context = new QuanLySanPhamContext();
+        }
+
         [HttpGet]
         public IActionResult Login()
         {
@@ -72,5 +80,40 @@ namespace MVC_View.Controllers
 
             return RedirectToAction("Index", "Product");
         }
+
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        // Handle registration data
+        [HttpPost]
+        public async Task<IActionResult> Register(User user)
+        {
+            if (ModelState.IsValid)
+            {
+                // Check if user already exists (you might want to add this check in a database)
+                var existingUser = _context.Users.FirstOrDefault(u => u.Username == user.Username);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Username", "Username is already taken.");
+                    return View(user);
+                }
+
+                // Add the new user to your database
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                // Optionally, automatically log in the user after registration
+                HttpContext.Session.SetString("Username", user.Username);
+
+                return RedirectToAction("Index", "Products");
+            }
+
+            // If model state is invalid, return the form with validation errors
+            return View(user);
+        }
+
     }
 }
