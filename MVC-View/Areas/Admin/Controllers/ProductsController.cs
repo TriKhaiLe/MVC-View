@@ -1,92 +1,94 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using MVC_View.Models;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MVC_View.Models;
 
 namespace MVC_View.Areas.Admin.Controllers
 {
     [Area("Admin")]
     public class ProductsController : Controller
     {
-        private readonly HttpClient _httpClient;
+        private readonly QuanLySanPhamContext _context;
 
-        public ProductsController(IHttpClientFactory httpClientFactory)
+        public ProductsController()
         {
-            _httpClient = httpClientFactory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7009/"); // Đặt Base URL của API
+            _context = new QuanLySanPhamContext();
         }
 
-        public async Task<IActionResult> getListProduct(int iddm)
-        {
-            List<Product> products = await _httpClient.GetFromJsonAsync<List<Product>>("api/Products") ?? [];
-
-            if (iddm != -1)
-            {
-                products = products.Where(p => p.CatalogId == iddm).ToList();
-            }
-
-            return PartialView("_ListProduct", products);
-        }
-
-        // GET: Products
+        // GET: Admin/Products
         public async Task<IActionResult> Index()
         {
-            var products = await _httpClient.GetFromJsonAsync<IEnumerable<Product>>("api/Products");
-            var listCatalog = await _httpClient.GetFromJsonAsync<IEnumerable<Catalog>>("api/Catalogs");
-            ViewBag.listCatalog = listCatalog;
-
-            return View(products);
+            var quanLySanPhamContext = _context.Products.Include(p => p.Catalog);
+            return View(await quanLySanPhamContext.ToListAsync());
         }
 
-        // GET: Products/Details/5
-        public async Task<IActionResult> Details(int id)
+        // GET: Admin/Products/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            var product = await _httpClient.GetFromJsonAsync<Product>($"api/Products/{id}");
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var product = await _context.Products
+                .Include(p => p.Catalog)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
                 return NotFound();
             }
+
             return View(product);
         }
 
-        // GET: Products/Create
+        // GET: Admin/Products/Create
         public IActionResult Create()
         {
+            ViewData["CatalogId"] = new SelectList(_context.Catalogs, "Id", "Id");
             return View();
         }
 
-        // POST: Products/Create
+        // POST: Admin/Products/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,CatalogId,ProductCode,ProductName,Picture,UnitPrice")] Product product)
         {
             if (ModelState.IsValid)
             {
-                var response = await _httpClient.PostAsJsonAsync("api/Products", product);
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
-                ModelState.AddModelError("", "Failed to create product");
+                _context.Add(product);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
+            ViewData["CatalogId"] = new SelectList(_context.Catalogs, "Id", "Id", product.CatalogId);
             return View(product);
         }
 
-        // GET: Products/Edit/5
-        public async Task<IActionResult> Edit(int id)
+        // GET: Admin/Products/Edit/5
+        public async Task<IActionResult> Edit(int? id)
         {
-            var product = await _httpClient.GetFromJsonAsync<Product>($"api/Products/{id}");
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
+            ViewData["CatalogId"] = new SelectList(_context.Catalogs, "Id", "Id", product.CatalogId);
             return View(product);
         }
 
-        // POST: Products/Edit/5
+        // POST: Admin/Products/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,CatalogId,ProductCode,ProductName,Picture,UnitPrice")] Product product)
@@ -98,39 +100,65 @@ namespace MVC_View.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                var response = await _httpClient.PutAsJsonAsync($"api/Products/{id}", product);
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    return RedirectToAction(nameof(Index));
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
                 }
-                ModelState.AddModelError("", "Failed to update product");
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductExists(product.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
             }
+            ViewData["CatalogId"] = new SelectList(_context.Catalogs, "Id", "Id", product.CatalogId);
             return View(product);
         }
 
-        // GET: Products/Delete/5
-        public async Task<IActionResult> Delete(int id)
+        // GET: Admin/Products/Delete/5
+        public async Task<IActionResult> Delete(int? id)
         {
-            var product = await _httpClient.GetFromJsonAsync<Product>($"api/Products/{id}");
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var product = await _context.Products
+                .Include(p => p.Catalog)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
                 return NotFound();
             }
+
             return View(product);
         }
 
-        // POST: Products/Delete/5
+        // POST: Admin/Products/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var response = await _httpClient.DeleteAsync($"api/Products/{id}");
-            if (response.IsSuccessStatusCode)
+            var product = await _context.Products.FindAsync(id);
+            if (product != null)
             {
-                return RedirectToAction(nameof(Index));
+                _context.Products.Remove(product);
             }
-            ModelState.AddModelError("", "Failed to delete product");
-            return View();
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool ProductExists(int id)
+        {
+            return _context.Products.Any(e => e.Id == id);
         }
     }
 }
