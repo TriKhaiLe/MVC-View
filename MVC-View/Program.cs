@@ -39,7 +39,7 @@ namespace MVC_View
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Account}/{action=Login}/{id?}");
+                pattern: "{controller=Users}/{action=Login}/{id?}");
 
             app.Run();
         }

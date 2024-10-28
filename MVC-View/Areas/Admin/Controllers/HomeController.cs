@@ -13,8 +13,8 @@ namespace MVC_View.Areas.Admin.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            HttpContext.Session.Remove("UserName");
-            return RedirectToAction("Login", "Account", new { area = "" });
+            HttpContext.Session.Remove("Username");
+            return RedirectToAction("Login", "Users", new { area = "" });
         }
 
     }

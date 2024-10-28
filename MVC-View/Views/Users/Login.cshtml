@@ -1,7 +1,7 @@
 ﻿@{
     Layout = null;
 }
-@model Account
+@model User
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,10 +35,10 @@
                             <h4>Hello! let's get started</h4>
                             <h6 class="font-weight-light">Sign in Admin account with username: "admin"; other usernames will be user account</h6>
                             @* <form class="pt-3"> *@
-                            @using (Html.BeginForm("Login", "Account", FormMethod.Post))
+                            @using (Html.BeginForm("Login", "Users", FormMethod.Post))
                             {
                                 <div class="form-group">
-                                    @Html.TextBoxFor(x => x.UserName, new { @class = "form-control form-control-lg", placeholder = "Username" })
+                                    @Html.TextBoxFor(x => x.Username, new { @class = "form-control form-control-lg", placeholder = "Username" })
                                     @* <input type="email" class="form-control form-control-lg" id="exampleInputEmail1" placeholder="Username"> *@
                                 </div>
                                 <div class="form-group">

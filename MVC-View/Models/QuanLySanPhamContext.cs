@@ -15,11 +15,11 @@ public partial class QuanLySanPhamContext : DbContext
     {
     }
 
-    public virtual DbSet<Account> Accounts { get; set; }
-
     public virtual DbSet<Catalog> Catalogs { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -27,16 +27,6 @@ public partial class QuanLySanPhamContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Account>(entity =>
-        {
-            entity.HasKey(e => e.UserName).HasName("PK__Account__C9F2845761B9FB06");
-
-            entity.ToTable("Account");
-
-            entity.Property(e => e.UserName).HasMaxLength(50);
-            entity.Property(e => e.Password).HasMaxLength(50);
-        });
-
         modelBuilder.Entity<Catalog>(entity =>
         {
             entity.ToTable("Catalog");
@@ -55,6 +45,17 @@ public partial class QuanLySanPhamContext : DbContext
             entity.HasOne(d => d.Catalog).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CatalogId)
                 .HasConstraintName("FK_Product_Catalog");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Username).HasName("PK__User__536C85E5524AB3A4");
+
+            entity.ToTable("User");
+
+            entity.Property(e => e.Username).HasMaxLength(50);
+            entity.Property(e => e.Fullname).HasMaxLength(100);
+            entity.Property(e => e.Password).HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);

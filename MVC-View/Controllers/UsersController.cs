@@ -6,12 +6,12 @@ using System.Security.Claims;
 
 namespace MVC_View.Controllers
 {
-    public class AccountController : Controller
+    public class UsersController : Controller
     {
         [HttpGet]
         public IActionResult Login()
         {
-            if (HttpContext.Session.GetString("UserName") == null)
+            if (HttpContext.Session.GetString("Username") == null)
             {
                 return View();
             }
@@ -22,13 +22,13 @@ namespace MVC_View.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(Account account)
+        public IActionResult Login(User user)
         {
-            if (HttpContext.Session.GetString("UserName") == null)
+            if (HttpContext.Session.GetString("Username") == null)
             {
-                HttpContext.Session.SetString("UserName", account.UserName);
+                HttpContext.Session.SetString("Username", user.Username);
 
-                if (account.UserName == "admin")
+                if (user.Username == "admin")
                 {
                     return RedirectToAction("Index", "Home", new { area = "Admin" });
                 }
@@ -43,14 +43,14 @@ namespace MVC_View.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            HttpContext.Session.Remove("UserName");
-            return RedirectToAction("Login", "Account");
+            HttpContext.Session.Remove("Username");
+            return RedirectToAction("Login", "Users");
         }
 
 
         public IActionResult ConfirmLogin()
         {
-            string userName = Request.Form["UserName"];
+            string userName = Request.Form["Username"];
             string password = Request.Form["Password"];
 
             var claims = new List<Claim>
