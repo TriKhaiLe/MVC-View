@@ -6,8 +6,9 @@ using MVC_View.Models;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace MVC_View.Controllers
+namespace MVC_View.Areas.Admin.Controllers
 {
+    [Area("Admin")]
     public class ProductsController : Controller
     {
         private readonly HttpClient _httpClient;
