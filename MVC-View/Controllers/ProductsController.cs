@@ -15,7 +15,7 @@ namespace MVC_View.Controllers
         public ProductsController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
-            _httpClient.BaseAddress = new Uri("https://localhost:7009/"); // Đặt Base URL của API
+            _httpClient.BaseAddress = new Uri("https://localhost:7009/");
         }
 
         public async Task<IActionResult> getListProduct(int iddm)

@@ -11,36 +11,35 @@ namespace MVC_View.Controllers
 {
     public class CatalogsController : Controller
     {
-        private readonly QuanLySanPhamContext _context;
+        private readonly HttpClient _httpClient;
 
-        public CatalogsController()
+        public CatalogsController(IHttpClientFactory httpClientFactory)
         {
-            _context = new QuanLySanPhamContext();
+            _httpClient = httpClientFactory.CreateClient();
+            _httpClient.BaseAddress = new Uri("https://localhost:7009/");
         }
 
-        // GET: Catalogs
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Catalogs.ToListAsync());
-        }
-
-        // GET: Catalogs/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
+            var catalogs = await _httpClient.GetFromJsonAsync<List<Catalog>>("Catalogs");
+            if (catalogs == null)
             {
                 return NotFound();
             }
 
-            var catalog = await _context.Catalogs
-                .FirstOrDefaultAsync(m => m.Id == id);
+            return View(catalogs);
+        }
+
+        public async Task<IActionResult> Details(int id)
+        {
+            var catalog = await _httpClient.GetFromJsonAsync<Catalog>($"Catalogs/{id}");
             if (catalog == null)
             {
                 return NotFound();
             }
-
             return View(catalog);
         }
+
 
         // GET: Catalogs/Create
         public IActionResult Create()
@@ -51,28 +50,27 @@ namespace MVC_View.Controllers
         // POST: Catalogs/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Catalogs/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,CatalogCode,CatalogName")] Catalog catalog)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(catalog);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                HttpResponseMessage response = await _httpClient.PostAsJsonAsync("Catalogs", catalog);
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
             }
             return View(catalog);
         }
 
         // GET: Catalogs/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var catalog = await _context.Catalogs.FindAsync(id);
+            Catalog catalog = await _httpClient.GetFromJsonAsync<Catalog>($"Catalogs/{id}");
             if (catalog == null)
             {
                 return NotFound();
@@ -81,55 +79,35 @@ namespace MVC_View.Controllers
         }
 
         // POST: Catalogs/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,CatalogCode,CatalogName")] Catalog catalog)
         {
             if (id != catalog.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
             if (ModelState.IsValid)
             {
-                try
+                HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"Catalogs/{id}", catalog);
+                if (response.IsSuccessStatusCode)
                 {
-                    _context.Update(catalog);
-                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CatalogExists(catalog.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
             }
             return View(catalog);
         }
 
         // GET: Catalogs/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var catalog = await _context.Catalogs
-                .FirstOrDefaultAsync(m => m.Id == id);
+            Catalog catalog = await _httpClient.GetFromJsonAsync<Catalog>($"Catalogs/{id}");
             if (catalog == null)
             {
                 return NotFound();
             }
-
             return View(catalog);
         }
 
@@ -138,19 +116,13 @@ namespace MVC_View.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var catalog = await _context.Catalogs.FindAsync(id);
-            if (catalog != null)
+            HttpResponseMessage response = await _httpClient.DeleteAsync($"Catalogs/{id}");
+            if (response.IsSuccessStatusCode)
             {
-                _context.Catalogs.Remove(catalog);
+                return RedirectToAction(nameof(Index));
             }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool CatalogExists(int id)
-        {
-            return _context.Catalogs.Any(e => e.Id == id);
+            ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+            return RedirectToAction(nameof(Delete), new { id });
         }
     }
 }
